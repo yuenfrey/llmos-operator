@@ -1,0 +1,61 @@
+apiVersion: runtime.llmos.ai/v1alpha1
+kind: RuntimeComponent
+metadata:
+  name: ray-2-57-py312-cu128
+spec:
+  type: DistributedRuntime
+  name: ray
+  version: "2.57"
+  artifact:
+    image: registry.example.com/runtime/ray:2.57-py312-cu128
+    mountPath: /opt/runtime/ray
+  compatibility:
+    os: linux
+    arch: amd64
+    python: "3.12"
+    cuda: "12.8"
+---
+apiVersion: runtime.llmos.ai/v1alpha1
+kind: RuntimeComponent
+metadata:
+  name: vllm-py312-cu128
+spec:
+  type: InferenceEngine
+  name: vllm
+  version: "latest"
+  artifact:
+    image: registry.example.com/runtime/vllm:py312-cu128
+    mountPath: /opt/runtime/vllm
+  compatibility:
+    os: linux
+    arch: amd64
+    python: "3.12"
+    cuda: "12.8"
+    torch: cu128
+  capabilities:
+    - tensor-parallel
+    - pipeline-parallel
+    - ray-executor
+---
+apiVersion: runtime.llmos.ai/v1alpha1
+kind: ModelDeployment
+metadata:
+  name: minimax-h3
+  namespace: default
+spec:
+  model:
+    uri: pvc://models/minimax-h3
+    servedName: minimax-h3
+  engine:
+    name: vllm
+  executor:
+    name: ray
+  runtime:
+    python: "3.12"
+    cuda: "12.8"
+  resources:
+    gpuCount: 8
+    gpuProduct: RTX4090
+  parallelism:
+    tensorParallelSize: 8
+    pipelineParallelSize: 1
